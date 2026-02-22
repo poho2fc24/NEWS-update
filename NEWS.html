@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Private News Hub</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --accent: #38bdf8;
+            --border: #334155;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header {
+            width: 100%;
+            max-width: 600px;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+        }
+
+        h1 { font-size: 1.5rem; margin: 0 0 15px 0; color: var(--accent); letter-spacing: 1px; }
+
+        #categories {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .tab:hover { border-color: var(--accent); color: var(--text-main); }
+
+        .tab.active {
+            background: var(--accent);
+            color: #0f172a;
+            border-color: var(--accent);
+            font-weight: bold;
+        }
+
+        #news-container {
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .article-card {
+            background: var(--card-bg);
+            margin-bottom: 20px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+            border: 1px solid var(--border);
+        }
+
+        .article-card:hover { transform: translateY(-4px); border-color: var(--accent); }
+
+        .article-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .content { padding: 15px; }
+
+        .source {
+            font-size: 11px;
+            color: var(--accent);
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        h3 { font-size: 16px; margin: 0; line-height: 1.5; }
+        h3 a { color: var(--text-main); text-decoration: none; }
+
+        .loading, .error {
+            text-align: center;
+            padding: 50px;
+            color: var(--text-dim);
+        }
+
+        @media (max-width: 600px) {
+            body { padding: 0; }
+            header { border-radius: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>⚡ DAILY DISPATCH</h1>
+        <nav id="categories">
+            <button class="tab active" data-cat="general">General</button>
+            <button class="tab" data-cat="technology">Technology</button>
+            <button class="tab" data-cat="business">Business</button>
+            <button class="tab" data-cat="science">Science</button>
+            <button class="tab" data-cat="sports">Sports</button>
+        </nav>
+    </header>
+
+    <div id="news-container">
+        <p class="loading">Syncing with global feeds...</p>
+    </div>
+
+    <script>
+        const API_KEY = '36bbc36f22e24916a15640923f28e62b';
+        
+        async function fetchNews(category = 'general') {
+            const container = document.getElementById('news-container');
+            container.innerHTML = '<p class="loading">Updating headlines...</p>';
+            
+            // Using corsproxy.io to bypass NewsAPI's browser restrictions
+            const proxy = "https://corsproxy.io/?";
+            const targetUrl = `https://newsapi.org/v2/top-headlines?country=us&category=${category}&apiKey=${API_KEY}`;
+            const finalUrl = proxy + encodeURIComponent(targetUrl);
+
+            try {
+                const response = await fetch(finalUrl);
+                const data = await response.json();
+
+                if (data.status !== "ok") throw new Error(data.message);
+
+                container.innerHTML = ''; 
+
+                if (data.articles.length === 0) {
+                    container.innerHTML = '<p class="loading">No articles found in
